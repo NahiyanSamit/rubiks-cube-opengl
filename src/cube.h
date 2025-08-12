@@ -11,11 +11,9 @@ struct Color {
 
 struct Cubie {
     float posX, posY, posZ;  // Current position in 3D space
-    float rotX, rotY, rotZ;  // Current rotation angles
     int gridX, gridY, gridZ; // Original grid position (-1, 0, 1)
-    
-    Cubie() : posX(0), posY(0), posZ(0), rotX(0), rotY(0), rotZ(0), 
-                  gridX(0), gridY(0), gridZ(0) {}
+
+    Cubie() : posX(0), posY(0), posZ(0), gridX(0), gridY(0), gridZ(0) {}
 };
 
 struct RubiksCube {
@@ -39,7 +37,6 @@ extern Color colors[6];
 void drawCubie(const Cubie& cube);
 void initializeColors();
 void drawEntireCube();
-void rotateLayer(int axis, int layer, float angle);
 void drawCube(float x, float y, float z, int cubeX, int cubeY, int cubeZ); // Legacy function
 
 #endif // CUBE_H

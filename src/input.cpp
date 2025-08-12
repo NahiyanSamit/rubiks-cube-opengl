@@ -4,6 +4,7 @@
 #include "input.h"
 #include "cube.h"
 
+
 bool isDragging = false;
 bool isRightClick = false;
 int lastMouseX = 0, lastMouseY = 0;
@@ -43,24 +44,8 @@ void mouseMotion(int x, int y) {
             if (cubeRotationY < -360.0f) cubeRotationY += 360.0f;
             
             std::cout << "Cube rotation: X=" << cubeRotationX << ", Y=" << cubeRotationY << std::endl;
-        } else {
-            // Left-click drag: rotate layer
-            float dragDistance = sqrt(deltaX * deltaX + deltaY * deltaY);
-            if (dragDistance > 5.0f) { // Minimum drag distance to start rotation
-                
-                // Determine which axis to rotate based on drag direction
-                if (abs(deltaX) > abs(deltaY)) {
-                    // Horizontal drag - rotate middle layer around Y-axis
-                    float rotationAmount = deltaX * 2.0f;
-                    rotateLayer(1, 0, rotationAmount);  // Y-axis, middle layer
-                } else {
-                    // Vertical drag - rotate middle layer around X-axis
-                    float rotationAmount = deltaY * 2.0f;
-                    rotateLayer(0, 0, rotationAmount);  // X-axis, middle layer
-                }
-            }
         }
-        
+    
         lastMouseX = x;
         lastMouseY = y;
         

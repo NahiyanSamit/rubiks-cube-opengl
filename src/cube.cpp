@@ -3,7 +3,7 @@
 #include <cmath>
 #include <iostream>
 
-// Global rotation variables (for backward compatibility)
+// Global rotation variables
 float cubeRotationX = 0.0f;
 float cubeRotationY = 0.0f;
 
@@ -42,9 +42,6 @@ void RubiksCube::initializeCube() {
                 cube.posX = cube.gridX;
                 cube.posY = cube.gridY;
                 cube.posZ = cube.gridZ;
-                
-                // Initialize rotations
-                cube.rotX = cube.rotY = cube.rotZ = 0.0f;
             }
         }
     }
@@ -55,11 +52,6 @@ void drawCubie(const Cubie& cube) {
     
     // Apply position
     glTranslatef(cube.posX, cube.posY, cube.posZ);
-    
-    // Apply rotations
-    glRotatef(cube.rotX, 1.0f, 0.0f, 0.0f);
-    glRotatef(cube.rotY, 0.0f, 1.0f, 0.0f);
-    glRotatef(cube.rotZ, 0.0f, 0.0f, 1.0f);
     
     float size = 0.45f; // Half the cube size
     
@@ -157,34 +149,6 @@ void RubiksCube::drawCube() {
     glPopMatrix();
 }
 
-void RubiksCube::rotateLayer(int axis, int layer, float angle) {
-    std::cout << "Rotating layer " << layer << " around axis " << axis << " by " << angle << " degrees" << std::endl;
-    
-    // Convert layer from (-1, 0, 1) to array index (0, 1, 2)
-    int layerIndex = layer + 1;
-    
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            Cubie* cube = nullptr;
-
-            switch(axis) {
-                case 0: // X-axis rotation (left/right faces)
-                    cube = &cubes[layerIndex][i][j];
-                    cube->rotX += angle;
-                    break;
-                case 1: // Y-axis rotation (top/bottom faces)
-                    cube = &cubes[i][layerIndex][j];
-                    cube->rotY += angle;
-                    break;
-                case 2: // Z-axis rotation (front/back faces)
-                    cube = &cubes[i][j][layerIndex];
-                    cube->rotZ += angle;
-                    break;
-            }
-        }
-    }
-}
-
 void RubiksCube::updateCubePositions() {
     // Update global rotations from the old variables (for compatibility)
     globalRotX = cubeRotationX;
@@ -195,8 +159,4 @@ void RubiksCube::updateCubePositions() {
 void drawEntireCube() {
     rubiksCube.updateCubePositions();
     rubiksCube.drawCube();
-}
-
-void rotateLayer(int axis, int layer, float angle) {
-    rubiksCube.rotateLayer(axis, layer, angle);
 }

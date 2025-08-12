@@ -9,7 +9,6 @@ void display() {
 
     gluLookAt(5, 5, 10, 0, 0, 0, 0, 1, 0);
 
-    // Draw the entire cube with rotations applied
     drawEntireCube();
 
     glutSwapBuffers();
