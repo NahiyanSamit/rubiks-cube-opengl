@@ -1,162 +1,86 @@
-#include "cube.h"
-#include <GL/glut.h>
+#include <algorithm>
+#include <cstdlib>
 #include <cmath>
-#include <iostream>
+#include "cube.h"
 
-// Global rotation variables
-float cubeRotationX = 0.0f;
-float cubeRotationY = 0.0f;
-
-// Global cube instance
-RubiksCube rubiksCube;
-
-// Define standard Rubik's cube colors
-Color colors[6] = {
-    Color(1.0f, 1.0f, 1.0f),  // 0: White (front)
-    Color(1.0f, 1.0f, 0.0f),  // 1: Yellow (back)
-    Color(1.0f, 0.0f, 0.0f),  // 2: Red (right)
-    Color(1.0f, 0.5f, 0.0f),  // 3: Orange (left)
-    Color(0.0f, 1.0f, 0.0f),  // 4: Green (top)
-    Color(0.0f, 0.0f, 1.0f)   // 5: Blue (bottom)
-};
-
-RubiksCube::RubiksCube() {
-    globalRotX = 0.0f;
-    globalRotY = 0.0f;
-    globalRotZ = 0.0f;
-    initializeCube();
+namespace {
+int irand(int a,int b){ return a + std::rand()%((b-a)+1); }
 }
 
-void RubiksCube::initializeCube() {
-    for (int x = 0; x < 3; x++) {
-        for (int y = 0; y < 3; y++) {
-            for (int z = 0; z < 3; z++) {
-                Cubie& cube = cubes[x][y][z];
-                
-                // Set grid position (-1, 0, 1)
-                cube.gridX = x - 1;
-                cube.gridY = y - 1;
-                cube.gridZ = z - 1;
-                
-                // Set initial position
-                cube.posX = cube.gridX;
-                cube.posY = cube.gridY;
-                cube.posZ = cube.gridZ;
-            }
+namespace Cube {
+
+std::vector<Cubelet> cubelets;
+std::deque<Move> moveQueue;
+std::vector<Move> undoStack;
+
+Cubelet::Cubelet(int I,int J,int K)
+    : i(I), j(J), k(K),
+      T(Math::mul(Math::translate(static_cast<float>(I),
+                                  static_cast<float>(J),
+                                  static_cast<float>(K)),
+                  Math::Mat4::identity())){}
+
+Move::Move(int ax,int ly,int d):axis(ax),layer(ly),dir(d),progress(0.f){}
+
+void reset(){
+    cubelets.clear();
+    for(int i=-1;i<=1;++i)
+        for(int j=-1;j<=1;++j)
+            for(int k=-1;k<=1;++k)
+                cubelets.emplace_back(i,j,k);
+    undoStack.clear();
+    moveQueue.clear();
+}
+
+void enqueueMove(int axis,int layer,int dir){
+    moveQueue.emplace_back(axis,layer,dir);
+}
+
+bool inLayer(const Cubelet& c, int axis, int layer){
+    float x = c.T.m[12];
+    float y = c.T.m[13];
+    float z = c.T.m[14];
+    int rx = static_cast<int>(roundf(x));
+    int ry = static_cast<int>(roundf(y));
+    int rz = static_cast<int>(roundf(z));
+    if(axis==0) return rx==layer;
+    if(axis==1) return ry==layer;
+    return rz==layer;
+}
+
+void rotateLayerStep(int axis,int layer,float angle){
+    Math::Mat4 R = Math::rotAxis(angle, axis);
+    Math::Mat4 C = Math::translate((axis==0?static_cast<float>(layer):0.f),
+                                   (axis==1?static_cast<float>(layer):0.f),
+                                   (axis==2?static_cast<float>(layer):0.f));
+    Math::Mat4 Ci = Math::translate(-(axis==0?static_cast<float>(layer):0.f),
+                                    -(axis==1?static_cast<float>(layer):0.f),
+                                    -(axis==2?static_cast<float>(layer):0.f));
+    for(auto &c: cubelets){
+        if(inLayer(c,axis,layer))
+            c.T = Math::mul(C, Math::mul(R, Math::mul(Ci, c.T)));
+    }
+}
+
+void finalizeLayer(int axis,int layer,int /*dir*/){
+    for(auto &c: cubelets){
+        if(!inLayer(c,axis,layer)) continue;
+        c.T.m[12]=roundf(c.T.m[12]);
+        c.T.m[13]=roundf(c.T.m[13]);
+        c.T.m[14]=roundf(c.T.m[14]);
+        for(int i=0;i<16;++i){
+            if(fabsf(c.T.m[i])<1e-4f) c.T.m[i]=0.f;
         }
     }
 }
 
-void drawCubie(const Cubie& cube) {
-    glPushMatrix();
-    
-    // Apply position
-    glTranslatef(cube.posX, cube.posY, cube.posZ);
-    
-    float size = 0.45f; // Half the cube size
-    
-    glBegin(GL_QUADS);
-    
-    // Front face (Z+)
-    glColor3f(colors[0].r, colors[0].g, colors[0].b);
-    glVertex3f(-size, -size,  size);
-    glVertex3f( size, -size,  size);
-    glVertex3f( size,  size,  size);
-    glVertex3f(-size,  size,  size);
-    
-    // Back face (Z-)
-    glColor3f(colors[1].r, colors[1].g, colors[1].b);
-    glVertex3f(-size, -size, -size);
-    glVertex3f(-size,  size, -size);
-    glVertex3f( size,  size, -size);
-    glVertex3f( size, -size, -size);
-    
-    // Right face (X+)
-    glColor3f(colors[2].r, colors[2].g, colors[2].b);
-    glVertex3f( size, -size, -size);
-    glVertex3f( size,  size, -size);
-    glVertex3f( size,  size,  size);
-    glVertex3f( size, -size,  size);
-    
-    // Left face (X-)
-    glColor3f(colors[3].r, colors[3].g, colors[3].b);
-    glVertex3f(-size, -size, -size);
-    glVertex3f(-size, -size,  size);
-    glVertex3f(-size,  size,  size);
-    glVertex3f(-size,  size, -size);
-    
-    // Top face (Y+)
-    glColor3f(colors[4].r, colors[4].g, colors[4].b);
-    glVertex3f(-size,  size, -size);
-    glVertex3f(-size,  size,  size);
-    glVertex3f( size,  size,  size);
-    glVertex3f( size,  size, -size);
-    
-    // Bottom face (Y-)
-    glColor3f(colors[5].r, colors[5].g, colors[5].b);
-    glVertex3f(-size, -size, -size);
-    glVertex3f( size, -size, -size);
-    glVertex3f( size, -size,  size);
-    glVertex3f(-size, -size,  size);
-    
-    glEnd();
-    
-    // Draw black edges
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glLineWidth(10.0f);
-    glBegin(GL_LINES);
-    
-    // Bottom edges
-    glVertex3f(-size, -size, -size); glVertex3f( size, -size, -size);
-    glVertex3f( size, -size, -size); glVertex3f( size, -size,  size);
-    glVertex3f( size, -size,  size); glVertex3f(-size, -size,  size);
-    glVertex3f(-size, -size,  size); glVertex3f(-size, -size, -size);
-    
-    // Top edges
-    glVertex3f(-size,  size, -size); glVertex3f( size,  size, -size);
-    glVertex3f( size,  size, -size); glVertex3f( size,  size,  size);
-    glVertex3f( size,  size,  size); glVertex3f(-size,  size,  size);
-    glVertex3f(-size,  size,  size); glVertex3f(-size,  size, -size);
-    
-    // Vertical edges
-    glVertex3f(-size, -size, -size); glVertex3f(-size,  size, -size);
-    glVertex3f( size, -size, -size); glVertex3f( size,  size, -size);
-    glVertex3f( size, -size,  size); glVertex3f( size,  size,  size);
-    glVertex3f(-size, -size,  size); glVertex3f(-size,  size,  size);
-    
-    glEnd();
-    
-    glPopMatrix();
-}
-
-void RubiksCube::drawCube() {
-    glPushMatrix();
-    
-    // Apply global rotations
-    glRotatef(globalRotX, 1.0f, 0.0f, 0.0f);
-    glRotatef(globalRotY, 0.0f, 1.0f, 0.0f);
-    glRotatef(globalRotZ, 0.0f, 0.0f, 1.0f);
-    
-    // Draw all small cubes
-    for (int x = 0; x < 3; x++) {
-        for (int y = 0; y < 3; y++) {
-            for (int z = 0; z < 3; z++) {
-                drawCubie(cubes[x][y][z]);
-            }
-        }
+void randomize(int moves){
+    for(int i=0;i<moves;++i){
+        int ax=irand(0,2);
+        int ly=irand(-1,1);
+        int d=(irand(0,1)?+1:-1);
+        enqueueMove(ax,ly,d);
     }
-    
-    glPopMatrix();
 }
 
-void RubiksCube::updateCubePositions() {
-    // Update global rotations from the old variables (for compatibility)
-    globalRotX = cubeRotationX;
-    globalRotY = cubeRotationY;
-}
-
-// Wrapper functions for backward compatibility
-void drawEntireCube() {
-    rubiksCube.updateCubePositions();
-    rubiksCube.drawCube();
-}
+} // namespace Cube

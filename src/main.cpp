@@ -1,40 +1,28 @@
 #include <GL/glut.h>
-#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include "app.h"
 #include "cube.h"
-#include "input.h"
 
-void display() {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
+int main(int argc,char**argv){
+    std::srand(static_cast<unsigned>(std::time(nullptr)));
 
-    gluLookAt(5, 5, 10, 0, 0, 0, 0, 1, 0);
+    glutInit(&argc,argv);
+    glutInitDisplayMode(GLUT_DOUBLE|GLUT_RGB|GLUT_DEPTH);
+    glutInitWindowSize(1000,800);
+    glutCreateWindow("Rubik's Cube (FreeGLUT/C++)");
 
-    drawEntireCube();
+    initGL();
 
-    glutSwapBuffers();
-}
+    Cube::reset();
+    initApp();
 
-void init() {
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LINE_SMOOTH);
-    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    glClearColor(0.2, 0.2, 0.2, 1.0); // Dark gray background
-    glMatrixMode(GL_PROJECTION);
-    gluPerspective(45.0, 1.0, 1.0, 100.0);
-    glMatrixMode(GL_MODELVIEW);
-}
-
-int main(int argc, char** argv) {
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
-    glutInitWindowSize(800, 600);
-    glutCreateWindow("Rubik's Cube");
-    init();
     glutDisplayFunc(display);
-
-    glutMouseFunc(mouseClick);
+    glutReshapeFunc(reshape);
+    glutKeyboardFunc(keyboard);
+    glutMouseFunc(mouseButton);
     glutMotionFunc(mouseMotion);
-    glutPassiveMotionFunc(passiveMotion);
+    glutIdleFunc(update);
 
     glutMainLoop();
     return 0;
