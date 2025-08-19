@@ -22,13 +22,11 @@ struct Move{
 
 extern std::vector<Cubelet> cubelets; // 27 cubelets
 extern std::deque<Move> moveQueue;
-extern std::vector<Move> undoStack;
 
 void reset();
 void enqueueMove(int axis,int layer,int dir);
 bool inLayer(const Cubelet& c, int axis, int layer);
 void rotateLayerStep(int axis,int layer,float angle);
 void finalizeLayer(int axis,int layer,int dir);
-void randomize(int moves);
 
 } // namespace Cube

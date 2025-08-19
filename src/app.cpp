@@ -14,25 +14,13 @@ bool rightDown=false,leftDown=false;
 
 // animation / timing
 bool animate=true;
-bool showFPS=true;
-bool showTimer=true;
-int startTimeMs=0;
 int lastFrameTime=0;
-float fps=0.f;
 
 // colors: R, G, B, Y, O, W faces
 const float FACE_COLORS[6][3]={
     {0.8f,0.0f,0.0f},{0.0f,0.6f,0.0f},{0.0f,0.2f,0.8f},
     {0.9f,0.9f,0.0f},{1.0f,0.5f,0.0f},{0.9f,0.9f,0.9f}
 };
-
-void drawText(float x,float y,const char* s){
-    glMatrixMode(GL_PROJECTION); glPushMatrix(); glLoadIdentity(); gluOrtho2D(0,1,0,1);
-    glMatrixMode(GL_MODELVIEW); glPushMatrix(); glLoadIdentity();
-    glRasterPos2f(x,y);
-    for(const char* p=s; *p; ++p) glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*p);
-    glPopMatrix(); glMatrixMode(GL_PROJECTION); glPopMatrix(); glMatrixMode(GL_MODELVIEW);
-}
 
 void applyMat(const Math::Mat4& M){ glMultMatrixf(M.m); }
 
@@ -101,8 +89,7 @@ void initGL(){
 }
 
 void initApp(){
-    startTimeMs = glutGet(GLUT_ELAPSED_TIME);
-    lastFrameTime = startTimeMs;
+    lastFrameTime = glutGet(GLUT_ELAPSED_TIME);
 }
 
 void display(){
@@ -126,15 +113,6 @@ void display(){
 
     glDisable(GL_LIGHTING);
 
-    char buf[128];
-    if(showFPS){ std::snprintf(buf,sizeof(buf),"FPS: %.1f", fps); drawText(0.01f,0.96f,buf); }
-    if(showTimer){
-        int t = glutGet(GLUT_ELAPSED_TIME) - startTimeMs;
-        int ms=t%1000; int s=(t/1000)%60; int m=(t/60000)%60;
-        std::snprintf(buf,sizeof(buf),"%02d:%02d.%03d", m,s,ms);
-        drawText(0.46f,0.96f,buf);
-    }
-
     glutSwapBuffers();
 }
 
@@ -146,7 +124,6 @@ void reshape(int w,int h){
 void update(){
     int now=glutGet(GLUT_ELAPSED_TIME);
     int dt = now - lastFrameTime; if(dt<=0) dt=1; lastFrameTime=now;
-    fps = 0.9f*fps + 0.1f*(1000.f/dt);
 
     if(animate && !Cube::moveQueue.empty()){
         Cube::Move &mv = Cube::moveQueue.front();
@@ -157,7 +134,6 @@ void update(){
         mv.progress += fabsf(a);
         if(mv.progress>=90.f-1e-3f){
             Cube::finalizeLayer(mv.axis,mv.layer,mv.dir);
-            Cube::undoStack.emplace_back(mv.axis,mv.layer,-mv.dir);
             Cube::moveQueue.pop_front();
         }
     }
@@ -195,18 +171,7 @@ void keyboard(unsigned char key,int,int){
         case 'S': case 's': cameraRotX += 5; break;
         case 'A': case 'a': cameraRotY -= 5; break;
         case 'D': case 'd': cameraRotY += 5; break;
-        case 'R': case 'r': Cube::reset(); startTimeMs=glutGet(GLUT_ELAPSED_TIME); break;
-        case 'T': case 't': Cube::randomize(30); break;
         case 'E': case 'e': animate=!animate; break;
-        case 'F': case 'f': showFPS=!showFPS; break;
-        case ' ': showTimer=!showTimer; break;
-        case 'U': case 'u':
-            if(!Cube::undoStack.empty()){
-                Cube::Move m=Cube::undoStack.back();
-                Cube::undoStack.pop_back();
-                Cube::moveQueue.push_front(m);
-            }
-            break;
         default: keyMove(key); break;
     }
 }

@@ -11,7 +11,6 @@ namespace Cube {
 
 std::vector<Cubelet> cubelets;
 std::deque<Move> moveQueue;
-std::vector<Move> undoStack;
 
 Cubelet::Cubelet(int I,int J,int K)
     : i(I), j(J), k(K),
@@ -28,7 +27,6 @@ void reset(){
         for(int j=-1;j<=1;++j)
             for(int k=-1;k<=1;++k)
                 cubelets.emplace_back(i,j,k);
-    undoStack.clear();
     moveQueue.clear();
 }
 
@@ -71,15 +69,6 @@ void finalizeLayer(int axis,int layer,int /*dir*/){
         for(int i=0;i<16;++i){
             if(fabsf(c.T.m[i])<1e-4f) c.T.m[i]=0.f;
         }
-    }
-}
-
-void randomize(int moves){
-    for(int i=0;i<moves;++i){
-        int ax=irand(0,2);
-        int ly=irand(-1,1);
-        int d=(irand(0,1)?+1:-1);
-        enqueueMove(ax,ly,d);
     }
 }
 
