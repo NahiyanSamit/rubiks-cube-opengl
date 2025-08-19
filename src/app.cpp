@@ -47,6 +47,8 @@ void drawCubelet(){
     glEnd();
 
     // black borders
+    glDisable(GL_LIGHTING);
+    glLineWidth(20.0f);
     glColor3f(0,0,0);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glBegin(GL_QUADS);
@@ -58,6 +60,7 @@ void drawCubelet(){
     glVertex3f(-0.5f,-0.5f,-0.5f); glVertex3f(0.5f,-0.5f,-0.5f); glVertex3f(0.5f,0.5f,-0.5f); glVertex3f(-0.5f,0.5f,-0.5f);
     glEnd();
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_LIGHTING);
 }
 
 void keyMove(unsigned char key){
@@ -82,10 +85,30 @@ void keyMove(unsigned char key){
 
 void initGL(){
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE); glCullFace(GL_BACK);
+    glDisable(GL_CULL_FACE);
+    glFrontFace(GL_CCW);
     glShadeModel(GL_SMOOTH);
     glClearColor(0.08f,0.08f,0.1f,1);
-    glEnable(GL_COLOR_MATERIAL); glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_NORMALIZE);
+
+    GLfloat globalAmb[4] = {0.25f,0.25f,0.25f,1.f};
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalAmb);
+
+    GLfloat L0amb[4] = {0.35f,0.35f,0.35f,1.f};
+    GLfloat L0dif[4] = {0.95f,0.95f,0.95f,1.f};
+    GLfloat L0spec[4]= {0.20f,0.20f,0.20f,1.f};
+    glLightfv(GL_LIGHT0, GL_AMBIENT,  L0amb);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE,  L0dif);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, L0spec);
+
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    GLfloat Mspec[4] = {0.10f,0.10f,0.10f,1.f};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, Mspec);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 8.f);
 }
 
 void initApp(){
@@ -100,6 +123,9 @@ void display(){
     glTranslatef(0,0,-12);
     glRotatef(cameraRotX,1,0,0);
     glRotatef(cameraRotY,0,1,0);
+
+    GLfloat pos0[4]={12.f,14.f,18.f,1.f};
+    glLightfv(GL_LIGHT0,GL_POSITION,pos0);
 
     glEnable(GL_LIGHTING); glEnable(GL_LIGHT0);
     GLfloat pos[4]={10,10,10,1}; glLightfv(GL_LIGHT0,GL_POSITION,pos);

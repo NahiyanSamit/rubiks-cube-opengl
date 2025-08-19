@@ -4,7 +4,7 @@ LDFLAGS = -lGL -lGLU -lglut
 
 SRC = src/main.cpp src/cube.cpp src/app.cpp
 OBJ = $(SRC:.cpp=.o)
-EXEC = rubik
+EXEC = rubiks_cube
 
 all: $(EXEC)
 
