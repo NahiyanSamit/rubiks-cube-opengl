@@ -1,51 +1,65 @@
-# Rubik's Cube Project
+# Rubik's Cube (OpenGL + GLUT)
 
-This project is a graphical representation of a Rubik's Cube using OpenGL and GLUT. It allows users to visualize the cube and interact with it through mouse input.
+A simple Rubik's Cube viewer with basic layer rotations using OpenGL and GLUT (FreeGLUT).
 
 ## Project Structure
 
-The project is organized into the following files:
+- `include/app.h` — App/GLUT callbacks (init, display, reshape, input)
+- `include/cube.h` — Cube data structures and move queue API
+- `include/math.h` — Minimal 4x4 matrix helpers for transforms
+- `src/app.cpp` — Rendering, input handling, animation/update loop
+- `src/cube.cpp` — Cubelet transforms, move queue, layer rotation logic
+- `src/main.cpp` — Program entry and GLUT setup
+- `Makefile` — Build script
 
-- `src/main.cpp`: The entry point of the application. Initializes GLUT, sets up the window, and registers display and input handling functions.
-- `src/cube.cpp`: Contains the implementation of the cube drawing logic, including the `drawCube` function.
-- `src/cube.h`: Declares the `drawCube` function and necessary structures related to cube drawing.
-- `src/input.cpp`: Implements mouse input handling functions, including `mouseClick`, `mouseMotion`, and `passiveMotion`.
-- `src/input.h`: Declares the mouse input handling functions for use in the main application.
-- `Makefile`: Contains build instructions for compiling the project.
+## Build
 
-## Building the Project
+Requirements (Linux):
+- OpenGL, GLU, and FreeGLUT development packages
+  - Debian/Ubuntu: `sudo apt install build-essential freeglut3-dev libglu1-mesa-dev mesa-common-dev`
 
-To build the project, navigate to the project directory and run the following command:
-
-```
-make
-```
-
-This will compile the source files and create an executable.
-
-## Running the Application
-
-After building the project, you can run the application with the following command:
+Build commands:
 
 ```
-./rubiks-cube
+make            # or: make main
+```
+
+This produces the executable:
+
+```
+./rubiks_cube
+```
+
+Clean:
+
+```
+make clean
+```
+
+## Run
+
+```
+./rubiks_cube
 ```
 
 ## Controls
 
-- **Right-click and drag**: Rotate the entire Rubik's cube in 3D space
-  - Horizontal mouse movement rotates around the Y-axis
-  - Vertical mouse movement rotates around the X-axis
-- **Left-click and drag**: Rotate individual layers/rows of the cube
-  - Horizontal drag rotates layers around the Y-axis (top/bottom layers)
-  - Vertical drag rotates layers around the X-axis (left/right layers)
-- Mouse movement coordinates are displayed in the console for debugging
+- Mouse
+  - Right click + drag: rotate the whole cube (orbit-like)
+  - Left click + drag: rotate a single layer
+    - Horizontal drag: rotates a layer around the Y axis
+    - Vertical drag: rotates a layer around the X axis
+    - The layer is chosen by the vertical position of the mouse when you click (top/middle/bottom)
 
-## Dependencies
+- Keyboard
+  - W/S: tilt cube up/down
+  - A/D: spin cube left/right
+  - E: toggle animation for queued moves
+  - Layer hotkeys (lowercase = clockwise, uppercase = counter‑clockwise):
+    - X‑axis layers: `z` (bottom), `x` (middle), `c` (top)
+    - Y‑axis layers: `n` (left), `b` (middle), `v` (right)
 
-This project requires the following libraries:
+## Notes
 
-- OpenGL
-- GLUT
-
-Make sure these libraries are installed on your system before building the project.
+- Back‑face culling is disabled to avoid gaps between cubelets. If you enable it, ensure face winding remains consistent after transforms.
+- If borders flicker against faces, consider using polygon offset for the filled quads or reducing line width.
